@@ -6,8 +6,8 @@ config :dt, DT.Repo,
   pool_size: 10
 
 config :spotify_ex,
-  client_id: System.get_env("SPOTIFY_CLIENT_ID"),
-  secret_key: System.get_env("SPOTIFY_SECRET_KEY"),
   user_id: "themk1boy",
   scopes: ["playlist-read-private", "playlist-modify-private"],
-  callback_url: "http://localhost:4000"
+  callback_url: "http://localhost:4000/callback"
+
+import_config "dev.secret.exs"

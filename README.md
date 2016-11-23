@@ -1,4 +1,3 @@
-# DiscoverTogether
+# Discover Together
 
-**TODO: Add description**
-
+Spotify App to create weekly playlists with your friends.

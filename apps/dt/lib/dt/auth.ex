@@ -15,11 +15,11 @@ defmodule DT.Auth do
   """
   @spec authenticate(params :: map) :: {:ok, DT.User.t} | {:error, any}
   def authenticate(params) do
-    auth = %Spotify.Auth{}
+    auth = %Spotify.Credentials{}
 
-    with {:ok, sp_auth}    <- Spotify.Authentication.authenticate(auth, params),
-         {:ok, sp_profile} <- Spotify.Profile.me(sp_auth),
-         {:ok, user}       <- create_or_update_user(sp_profile, sp_auth),
+    with {:ok, %Spotify.Credentials{} = sp_auth} <- Spotify.Authentication.authenticate(auth, params),
+         {:ok, %Spotify.Profile{} = sp_profile}  <- Spotify.Profile.me(sp_auth),
+         {:ok, user}                             <- create_or_update_user(sp_profile, sp_auth),
          do: {:ok, user}
   end
 
@@ -30,17 +30,17 @@ defmodule DT.Auth do
   @spec reauthenticate(DT.User.t) :: {:ok, DT.User.t} | {:error, any}
   def reauthenticate(user) do
     user
-    |> auth_from_user
-    |> Spotify.Authentication.refresh
+    |> auth_from_user()
+    |> Spotify.Authentication.refresh()
     |> case do
       {:ok, sp_auth} -> update_user_with_auth(user, sp_auth)
       reason         -> reason
     end
   end
 
-  @spec auth_from_user(DT.User.t) :: Spotify.Auth.t
+  @spec auth_from_user(DT.User.t) :: Spotify.Credentials.t
   def auth_from_user(%DT.User{spotify_access_token: at, spotify_refresh_token: rt}) do
-    %Spotify.Auth{access_token: at, refresh_token: rt}
+    %Spotify.Credentials{access_token: at, refresh_token: rt}
   end
 
   defp create_or_update_user(sp_profile, sp_auth) do
@@ -52,7 +52,7 @@ defmodule DT.Auth do
       user  -> user
     end
     |> DT.User.changeset(params)
-    |> DT.Repo.update
+    |> DT.Repo.insert_or_update
   end
 
   defp update_user_with_auth(user, sp_auth) do
@@ -71,9 +71,10 @@ defmodule DT.Auth do
   end
   defp build_update_params(%Spotify.Profile{} = profile) do
     %{display_name: profile.display_name,
-      profile_image_url: extract_profile_image(profile)}
+      profile_image_url: extract_profile_image(profile),
+      spotify_id: profile.id}
   end
-  defp build_update_params(%Spotify.Auth{} = auth) do
+  defp build_update_params(%Spotify.Credentials{} = auth) do
     %{spotify_access_token: auth.access_token,
       spotify_refresh_token: auth.refresh_token}
   end
@@ -82,8 +83,8 @@ defmodule DT.Auth do
   defp extract_profile_image(%Spotify.Profile{images: images}) do
     List.first(images)
     |> case do
-      %{url: url} -> url
-      _           -> nil
+      %{"url" => url} -> url
+      _               -> nil
     end
   end
 end

@@ -38,6 +38,6 @@ defmodule DT.Mixfile do
   defp deps do
     [{:ecto, "~> 2.0"},
      {:postgrex, "~> 0.12"},
-     {:spotify_ex, github: "adamzaninovich/spotify_ex", branch: "add-and-use-auth-struct-to-decouple-from-plug-conn"}]
+     {:spotify_ex, "~> 2.0"}]
   end
 end
