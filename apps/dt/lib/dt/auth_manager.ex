@@ -2,12 +2,23 @@ defmodule DT.AuthManager do
   use GenServer
   @name __MODULE__
 
+  def start_link() do
+    GenServer.start_link(@name, [], name: @name)
+  end
+
   def set_creds(user_id, creds) do
     GenServer.cast(@name, {:set_creds, user_id, creds})
   end
 
   def get_creds(user_id) do
     GenServer.call(@name, {:get_creds, user_id})
+  end
+
+  # Callbacks
+
+  def init(_) do
+    table = :ets.new(:auth, [])
+    {:ok, table}
   end
 
   def handle_cast({:set_creds, user_id, creds}, table) do
@@ -22,6 +33,7 @@ defmodule DT.AuthManager do
 
   defp do_get_creds(user_id, table) do
     with {:ok, creds} <- get_creds(user_id, table),
+         {:ok, creds} <- maybe_refetch_creds(creds, user_id),
          {:ok, creds} <- maybe_refresh_creds(creds),
          _            <- do_set_creds(user_id, creds, table) do 
       {:ok, creds}
@@ -38,12 +50,12 @@ defmodule DT.AuthManager do
   defp get_creds(user_id, table) do
     :ets.lookup(table, user_id)
     |> case do
-      []     -> nil
-      [item] -> item
-    end
+      []     -> {:ok, nil} 
+      [item] -> {:ok, item}
+    end |> IO.inspect
   end
 
-  defp maybe_refetch_creds({creds, ts}, _), do: {creds, ts}
+  defp maybe_refetch_creds({_, creds, ts}, _), do: {:ok, {creds, ts}}
   defp maybe_refetch_creds(nil, user_id) do
     # We don't have this users credentials in the cache: refetch!
     creds =
@@ -51,7 +63,7 @@ defmodule DT.AuthManager do
       |> DT.Auth.auth_from_user()
 
     # Don't set a time so we always refresh these
-    {creds, nil}
+    {:ok, {creds, nil}}
   end
 
   defp maybe_refresh_creds({creds, _}) do

@@ -8,7 +8,8 @@ defmodule DT do
 
     # Define workers and child supervisors to be supervised
     children = [
-      supervisor(DT.Repo, [])
+      supervisor(DT.Repo, []),
+      worker(DT.AuthManager, [])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
