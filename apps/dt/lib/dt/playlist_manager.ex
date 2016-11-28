@@ -3,7 +3,7 @@ defmodule DT.PlaylistManager do
   Interface for operating on Playlists and syncing them to Spotify
   """
   alias Spotify, as: Sp
-  alias DT.{Playlist, Repo, AuthManager}
+  alias DT.{User, Playlist, Repo, AuthManager}
   import Ecto.Query
 
   @doc """
@@ -24,7 +24,7 @@ defmodule DT.PlaylistManager do
   """
   @spec list(User.t) :: [Playlist.t]
   def list(user) do
-    from(p in Playlist, where: owner_id == ^user.id)
+    from(p in Playlist, where: p.owner_id == ^user.id)
     |> Repo.all()
   end
 

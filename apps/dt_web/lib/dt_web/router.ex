@@ -26,7 +26,9 @@ defmodule DTWeb.Router do
   scope "/", DTWeb do
     pipe_through [:browser, :browser_auth]
 
-    resources "/playlists", PlaylistController
+    resources "/playlists", PlaylistController do
+      resources "/contributors", PlaylistContributorController
+    end
   end
 
   # Other scopes may use custom stacks.

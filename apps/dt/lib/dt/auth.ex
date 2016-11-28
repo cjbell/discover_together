@@ -21,7 +21,7 @@ defmodule DT.Auth do
 
     with {:ok, %Sp.Credentials{} = sp_auth} <- Sp.Authentication.authenticate(auth, params),
          {:ok, %Sp.Profile{} = sp_profile}  <- Sp.Profile.me(sp_auth),
-         {:ok, user}                             <- create_or_update_user(sp_profile, sp_auth),
+         {:ok, user}                        <- create_or_update_user(sp_profile, sp_auth),
          do: {:ok, user}
   end
 
