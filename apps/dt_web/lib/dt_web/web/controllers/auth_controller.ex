@@ -2,7 +2,7 @@ defmodule DTWeb.AuthController do
   use DTWeb.Web, :controller
 
   def login(conn, _) do
-    redirect conn, external: DT.Auth.url
+    redirect conn, external: DT.Auth.url()
   end
 
   def callback(conn, params) do

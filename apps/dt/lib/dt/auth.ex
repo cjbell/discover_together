@@ -36,7 +36,7 @@ defmodule DT.Auth do
     |> Sp.Authentication.refresh()
     |> case do
       {:ok, sp_auth} -> update_user_with_auth(user, sp_auth)
-      reason         -> reason
+      reason         -> {:error, reason}
     end
   end
 
@@ -75,6 +75,9 @@ defmodule DT.Auth do
     %{display_name: profile.display_name,
       profile_image_url: extract_profile_image(profile),
       spotify_id: profile.id}
+  end
+  defp build_update_params(%Sp.Credentials{refresh_token: nil} = auth) do
+    %{spotify_access_token: auth.access_token}
   end
   defp build_update_params(%Sp.Credentials{} = auth) do
     %{spotify_access_token: auth.access_token,

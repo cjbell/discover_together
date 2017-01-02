@@ -1,4 +1,9 @@
 defmodule DT.AuthManager do
+  @moduledoc """
+  Interfacing into getting a cached set of Credentials for use
+  in Spotify requests.
+  """
+
   use GenServer
   @name __MODULE__
 
@@ -6,10 +11,18 @@ defmodule DT.AuthManager do
     GenServer.start_link(@name, [], name: @name)
   end
 
+  @doc """
+  Sets a set of Credentials to be retrieved at a later point.
+  """
+  @spec set_creds(number, Spotify.Credentials.t) :: no_return
   def set_creds(user_id, creds) do
     GenServer.cast(@name, {:set_creds, user_id, creds})
   end
 
+  @doc """
+  Retrieves a set of Credentials.
+  """
+  @spec get_creds(number) :: {:ok, Spotify.Credentials.t} | {:error, String.t)
   def get_creds(user_id) do
     GenServer.call(@name, {:get_creds, user_id})
   end
@@ -22,52 +35,54 @@ defmodule DT.AuthManager do
   end
 
   def handle_cast({:set_creds, user_id, creds}, table) do
-    do_set_creds(user_id, creds, table)
+    set_creds(user_id, creds, table)
     {:noreply, table}
   end
 
   def handle_call({:get_creds, user_id}, _, table) do
-    reply = do_get_creds(user_id, table)
+    reply = get_creds(user_id, table)
     {:reply, reply, table}
   end
 
-  defp do_get_creds(user_id, table) do
-    with {:ok, creds} <- get_creds(user_id, table),
-         {:ok, creds} <- maybe_refetch_creds(creds, user_id),
-         {:ok, creds} <- maybe_refresh_creds(creds),
-         _            <- do_set_creds(user_id, creds, table) do 
-      {:ok, creds}
-    else 
-      _ -> {:error, :no_creds}
+  defp get_creds(user_id, table) do
+    {:ok, creds} = get_existing_creds(user_id, table)
+
+    requires_refresh?(creds)
+    |> case do
+      true  -> refresh_and_set_creds(user_id, table)
+      false -> {:ok, creds}
     end
   end
 
-  defp do_set_creds(user_id, creds, table) do
+  defp set_creds(user_id, creds, table) do
     now = :os.system_time(:seconds)
     :ets.insert(table, {user_id, creds, now})
   end
 
-  defp get_creds(user_id, table) do
+  defp get_existing_creds(user_id, table) do
     :ets.lookup(table, user_id)
     |> case do
-      []     -> {:ok, nil} 
-      [item] -> {:ok, item}
-    end |> IO.inspect
+      []              -> {:ok, nil}
+      [{_, creds, _}] -> {:ok, creds}
+    end
   end
 
-  defp maybe_refetch_creds({_, creds, ts}, _), do: {:ok, {creds, ts}}
-  defp maybe_refetch_creds(nil, user_id) do
-    # We don't have this users credentials in the cache: refetch!
-    creds =
-      DT.Repo.get(DT.User, user_id)
-      |> DT.Auth.auth_from_user()
+  # For now all cases require a refresh because TTL needs to be implemented
+  defp requires_refresh?(nil), do: true
+  defp requires_refresh?(_creds), do: true
 
-    # Don't set a time so we always refresh these
-    {:ok, {creds, nil}}
+  defp refresh_and_set_creds(user_id, table) do
+    with {:ok, creds} <- refresh_creds(user_id),
+         _            <- set_creds(user_id, creds, table),
+         do: {:ok, creds}
   end
 
-  defp maybe_refresh_creds({creds, _}) do
-    # Always refresh, for now
-    Spotify.Authentication.refresh(creds)
+  defp refresh_creds(user_id) do
+    DT.Repo.get(DT.User, user_id)
+    |> DT.Auth.reauthenticate()
+    |> case do
+      {:ok, user} -> {:ok, DT.Auth.auth_from_user(user)}
+      {:error, _} -> {:error, "There was a problem with authenticating"}
+    end
   end
 end

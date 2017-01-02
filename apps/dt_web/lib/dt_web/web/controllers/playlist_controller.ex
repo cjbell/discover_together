@@ -22,7 +22,7 @@ defmodule DTWeb.PlaylistController do
         |> redirect(to: playlist_path(conn, :show, playlist.id))
       {:error, changeset} ->
         conn
-        |> render(conn, "new.html", changeset: changeset)
+        |> render("new.html", changeset: changeset)
     end
   end
 end

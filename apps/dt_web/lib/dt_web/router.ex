@@ -30,9 +30,4 @@ defmodule DTWeb.Router do
       resources "/contributors", PlaylistContributorController
     end
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", DTWeb do
-  #   pipe_through :api
-  # end
 end
