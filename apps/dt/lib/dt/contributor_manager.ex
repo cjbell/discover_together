@@ -12,7 +12,7 @@ defmodule DT.ContributorManager do
          {:ok, owner_creds} <- get_creds(playlist.owner),
          {:ok, playlist}    <- join_playlist(playlist, user),
          {:ok, playlist}    <- write_playlist(playlist, owner_creds),
-         {:ok, playlist}    <- follow_playlist(playlist, user_creds),
+         {:ok, playlist}    <- follow_playlist(playlist, user, user_creds),
          do: {:ok, playlist}
   end
 
@@ -41,14 +41,14 @@ defmodule DT.ContributorManager do
   end
 
   defp write_playlist(playlist, owner_creds) do
-    DT.PlaylistWriter.write_playlist(playlist, owner_creds)
+    #DT.PlaylistWriter.write_playlist(playlist, owner_creds)
   end
 
   defp follow_playlist(playlist, user, user_creds) do
-    DT.PlaylistFollower.follow_playlist(playlist, user, user_creds)
+    #DT.PlaylistFollower.follow_playlist(playlist, user, user_creds)
   end
 
   defp unfollow_playlist(playlist, user, user_creds) do
-    DT.PlaylistFollower.unfollow_playlist(playlist, user, user_creds)
+    #DT.PlaylistFollower.unfollow_playlist(playlist, user, user_creds)
   end
 end

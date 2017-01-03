@@ -2,6 +2,8 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+config :dt, ecto_repos: [DT.Repo]
+
 config :dt, DT.Repo,
   adapter: Ecto.Adapters.Postgres
 

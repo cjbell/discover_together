@@ -22,7 +22,7 @@ defmodule DT.AuthManager do
   @doc """
   Retrieves a set of Credentials.
   """
-  @spec get_creds(number) :: {:ok, Spotify.Credentials.t} | {:error, String.t)
+  @spec get_creds(number) :: {:ok, Spotify.Credentials.t} | {:error, String.t}
   def get_creds(user_id) do
     GenServer.call(@name, {:get_creds, user_id})
   end
