@@ -12,10 +12,10 @@ defmodule DT.TrackFetcher do
               name: nil,
               owner_id: nil,
               tracks: [],
-              snapshot_id: nil,
+              snapshot_id: nil
   end
 
-  @spec get_tracks() :: {:ok, [Spotify.Track.t]} | {:error, atom}
+  @spec get_tracks(DT.User.t, String.t, map) :: {:ok, [Spotify.Track.t]} | {:error, atom}
   def get_tracks(user, spotify_playlist_id, creds) do
     GenServer.call(@name, {:get_tracks, user, spotify_playlist_id, creds})
   end

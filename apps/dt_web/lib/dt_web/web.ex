@@ -26,6 +26,7 @@ defmodule DTWeb.Web do
     quote do
       use Phoenix.Controller, namespace: DTWeb
 
+      import DTWeb.ErrorHelpers
       import DTWeb.Router.Helpers
       import DTWeb.Gettext
     end

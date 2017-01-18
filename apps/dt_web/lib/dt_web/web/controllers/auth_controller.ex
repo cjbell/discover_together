@@ -1,5 +1,6 @@
 defmodule DTWeb.AuthController do
   use DTWeb.Web, :controller
+  import DTWeb.ClientHelpers, only: [auth_success_url: 1, auth_error_url: 1]
 
   def login(conn, _) do
     redirect conn, external: DT.Auth.url()
@@ -9,20 +10,18 @@ defmodule DTWeb.AuthController do
     DT.Auth.authenticate(params)
     |> case do
       {:ok, user} ->
+        conn  = Guardian.Plug.api_sign_in(conn, user)
+        token = Guardian.Plug.current_token(conn)
         conn
-        |> Guardian.Plug.sign_in(user)
-        |> redirect(to: "/playlists")
+        |> redirect(to: auth_success_url(token))
       {:error, _} ->
         conn
-        |> put_flash(:error, "Could not authenticate")
-        |> redirect(to: "/")
+        |> redirect(to: auth_error_url("Could not authenticate"))
     end
   end
 
   def unauthenticated(conn, _) do
     conn
-    |> put_status(401)
-    |> put_flash(:error, "Authentication required")
-    |> redirect(to: "/")
+    |> redirect(to: auth_error_url("Could not authenticate"))
   end
 end

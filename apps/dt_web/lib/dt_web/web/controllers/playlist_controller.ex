@@ -4,12 +4,17 @@ defmodule DTWeb.PlaylistController do
   def index(conn, params) do
     user      = Guardian.Plug.current_resource(conn)
     playlists = DT.PlaylistManager.list(user)
-    render(conn, "index.html", playlists: playlists)
+    render(conn, "index.json", playlists: playlists)
   end
 
-  def new(conn, params) do
-    changeset = DT.PlaylistManager.create()
-    render(conn, "new.html", changeset: changeset)
+  def preview(conn, %{"id" => id}) do
+    DT.PlaylistManager.get_playlist_preview(id)
+    |> case do
+      %DT.Playlist{} = playlist ->
+        render(conn, "preview.json", playlist: playlist)
+      _ ->
+        render_error(conn, 404)
+    end
   end
 
   def create(conn, params) do
@@ -17,12 +22,9 @@ defmodule DTWeb.PlaylistController do
     DT.PlaylistManager.create(user, params)
     |> case do
       {:ok, playlist} ->
-        conn
-        |> put_flash(:success, "Playlist created")
-        |> redirect(to: playlist_path(conn, :show, playlist.id))
+        render(conn, "show.json", playlist: playlist)
       {:error, changeset} ->
-        conn
-        |> render("new.html", changeset: changeset)
+        render_error(conn, 422, changeset: changeset)
     end
   end
 end

@@ -1,33 +1,42 @@
 defmodule DTWeb.Router do
   use DTWeb.Web, :router
 
-  pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_flash
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+  pipeline :api do
+    plug :accepts, ["json"]
   end
 
-  pipeline :browser_auth do
+  pipeline :api_auth do
     plug Guardian.Plug.VerifySession
     plug Guardian.Plug.LoadResource
     plug Guardian.Plug.EnsureAuthenticated, handler: DTWeb.AuthController
   end
 
-  scope "/", DTWeb do
-    pipe_through :browser # Use the default browser stack
+  @api_actions ~w(
+    index
+    show
+    update
+    create
+    destroy
+  )a
 
-    get "/", PageController, :index
+  scope "/api", DTWeb do
+    pipe_through :api # Use the default api stack
+
     get "/login", AuthController, :login
     get "/callback", AuthController, :callback
+
+    # Partial playlist is used for sharing before login
+    get "/playlists/:id/preview", PlaylistController, :preview, as: "playlist_preview"
   end
 
-  scope "/", DTWeb do
-    pipe_through [:browser, :browser_auth]
+  scope "/api", DTWeb do
+    pipe_through [:api, :api_auth]
 
-    resources "/playlists", PlaylistController do
-      resources "/contributors", PlaylistContributorController
+    get "/me", UserController, :me
+    get "/spotify_playlists", SpotifyPlaylistController, :index
+
+    resources "/playlists", PlaylistController, only: @api_actions do
+      resources "/contributors", PlaylistContributorController, only: @api_actions, as: :contributor
     end
   end
 end
